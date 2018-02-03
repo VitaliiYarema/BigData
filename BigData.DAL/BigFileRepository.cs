@@ -9,6 +9,7 @@ namespace BigData.DAL
 {
     public class BigFileRepository
     {
+        public static string Marker { get; set; }
         public static FileInfo StartFileInfo { get; set; }
         public static string StartFileName { get; set; }
         public static string StartDirName { get; set; }
@@ -40,7 +41,7 @@ namespace BigData.DAL
                     filesToDivide.Clear();
                     for (int i = 0; i < listFiles.Count; i++)
                     {
-                        if (listFiles[i].Contains("  "))
+                        if (listFiles[i].Contains("_" + "  "))
                         {
                             continue;
                         }
@@ -113,7 +114,7 @@ namespace BigData.DAL
                         if (str.Length > charNum)
                         {
                             var fileNameW = Path.GetFileNameWithoutExtension(info.Name);
-                            var fileWrite = Path.Combine(info.DirectoryName, fileNameW + " " + str[charNum] + ".txt");
+                            var fileWrite = Path.Combine(info.DirectoryName, fileNameW + "_" + str[charNum] + ".txt");
 
                             File.OpenWrite(fileWrite).Close();
                             if (!listFiles.Contains(fileWrite))
@@ -129,7 +130,7 @@ namespace BigData.DAL
                         else
                         {
                             var fileNameW = Path.GetFileNameWithoutExtension(info.Name);
-                            var fileWrite = Path.Combine(info.DirectoryName, fileNameW + "  " + ".txt");
+                            var fileWrite = Path.Combine(info.DirectoryName, fileNameW + "_" + "  " + ".txt");
 
                             File.OpenWrite(fileWrite).Close();
                             if (!listFiles.Contains(fileWrite))
@@ -153,6 +154,89 @@ namespace BigData.DAL
             {
 
             }
+        }
+
+        public static void GetFilesToSort()
+        {
+            filesToCombine.Clear();
+            string[] fileEntries = Directory.GetFiles(StartDirName);
+            foreach (string fileName in fileEntries)
+            {
+                var info = new FileInfo(fileName);
+                var fileNameW = Path.GetFileNameWithoutExtension(StartFileInfo.Name);
+                if (info.Name.Contains(fileNameW + "_"))
+                {
+                    filesToCombine.Add(fileName);
+                }
+            }
+        }
+
+        public static void SortFile(string fileName)
+        {
+            List<Record> records = new List<Record>();
+            using (StreamReader sr = new StreamReader(fileName))
+            {
+                while (sr.Peek() >= 0)
+                {
+                    var textLine = sr.ReadLine();
+                    var str = GetStringLine(textLine);
+                    if (string.IsNullOrEmpty(str))
+                    {
+                        continue;
+                    }
+                    var record = GetRecord(textLine);
+                    records.Add(record);
+                }
+            }
+            var sortedRecords = SortRecords(records);
+            File.Delete(fileName);
+            using (StreamWriter sw = new StreamWriter(fileName, true, Encoding.Unicode))
+            {
+                foreach (var record in sortedRecords)
+                {
+                    sw.WriteLine(record.GetString);
+                }
+            }
+        }
+
+        private static List<Record> SortRecords(List<Record> records)
+        {
+            return records.OrderBy(r => r.Line).ThenBy(n => n.Number).ToList();
+        }
+
+        public static void MakeCombineList()
+        {
+            GetFilesToSort();
+            var files = filesToCombine.Select(r => System.IO.Path.GetFileNameWithoutExtension(r)).ToList();
+            files = files.OrderBy(r => r).ToList();
+            filesToCombine = files.Select(r => string.Format(r + ".txt")).ToList();
+        }
+
+        private static void MergeFile(string fileRead, string fileWrite)
+        {
+            using (StreamWriter sw = new StreamWriter(fileWrite, true, Encoding.Unicode))
+            {
+                using (StreamReader sr = new StreamReader(fileRead))
+                {
+                    while (sr.Peek() >= 0)
+                    {
+                        var textLine = sr.ReadLine();
+                        sw.WriteLine(textLine);
+                    }
+                }
+            }
+        }
+
+        public static async Task CombineFile(string fileWrite)
+        {
+            await Task.Run(() =>
+            {
+                for (int i = 0; i < filesToCombine.Count; i++)
+                {
+                    var fileRead = Path.Combine(StartDirName, filesToCombine[i]);
+                    MergeFile(fileRead, fileWrite);
+                }
+            });
         }
     }
 }
