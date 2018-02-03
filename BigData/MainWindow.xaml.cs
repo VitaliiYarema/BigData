@@ -87,6 +87,7 @@ namespace BigData
                         {
                             var threads = System.Diagnostics.Process.GetCurrentProcess().Threads;
                             Dispatcher.Invoke(() => { TextBoxThreads.Text = threads.Count.ToString(); });
+
                             if (filesToDivide[i] == fileName)
                             {
                                 DivideIntoFiles(filesToDivide[i], listFiles, indexChar, false);
@@ -96,6 +97,8 @@ namespace BigData
                                 DivideIntoFiles(filesToDivide[i], listFiles, indexChar);
                             }
                         });
+
+                        Dispatcher.Invoke(() => { TextBoxDone.Text = "Dividing " + filesToDivide.Count; });
 
                         filesToDivide.Clear();
                         for (int i = 0; i < listFiles.Count; i++)
@@ -165,7 +168,8 @@ namespace BigData
                         }
                         if (str.Length > charNum)
                         {
-                            var fileWrite = System.IO.Path.Combine(info.DirectoryName, info.Name + "_" + str[charNum] + ".txt");
+                            var fileNameW = System.IO.Path.GetFileNameWithoutExtension(info.Name);
+                            var fileWrite = System.IO.Path.Combine(info.DirectoryName, fileNameW + "_" + str[charNum] + ".txt");
 
                             File.OpenWrite(fileWrite).Close();
                             if (!listFiles.Contains(fileWrite))
@@ -180,7 +184,8 @@ namespace BigData
                         }
                         else
                         {
-                            var fileWrite = System.IO.Path.Combine(info.DirectoryName, info.Name + "__.txt");
+                            var fileNameW = System.IO.Path.GetFileNameWithoutExtension(info.Name);
+                            var fileWrite = System.IO.Path.Combine(info.DirectoryName, fileNameW + "__.txt");
 
                             File.OpenWrite(fileWrite).Close();
                             if (!listFiles.Contains(fileWrite))
@@ -302,7 +307,8 @@ namespace BigData
             foreach (string fileName in fileEntries)
             {
                 var info = new FileInfo(fileName);
-                if(info.Name.Contains(StartFileInfo.Name + "_"))
+                var fileNameW = System.IO.Path.GetFileNameWithoutExtension(StartFileInfo.Name);
+                if (info.Name.Contains(fileNameW + "_"))
                 {
                     filesToCombine.Add(fileName);
                 }
@@ -461,20 +467,15 @@ namespace BigData
         {
             TextBoxDone.Text = "Start sort";
             GetFilesToSort(StartDirName);
-            var task = Task.Run(async () =>
+            ParallelLoopResult loopResult = Parallel.For(0, filesToCombine.Count, (i) =>
             {
-                await Task.Yield();
-                Parallel.For(0, filesToCombine.Count, (i) =>
-                {
-                    SortFile(filesToCombine[i]);
-                });
+                SortFile(filesToCombine[i]);
             });
-            while(!task.IsCompleted)
-            {
-                TextBoxDone.Text = "Sorting ...";
-            }
 
-            TextBoxDone.Text = "Sorted";
+            if (loopResult.IsCompleted)
+            {
+                TextBoxDone.Text = "Sorted";
+            }
         }
     }
 }
