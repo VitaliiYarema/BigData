@@ -94,5 +94,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BigData.DAL\BigData.DAL.csproj">
+      <Project>{1c3a8ac8-af6b-4b51-9aa4-ccf4716cd4b9}</Project>
+      <Name>BigData.DAL</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

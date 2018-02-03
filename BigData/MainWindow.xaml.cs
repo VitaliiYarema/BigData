@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using BigData.DAL;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -28,12 +29,23 @@ namespace BigData
         public string StartDirName { get; set; }
         public List<string> filesToDivide = new List<string>();
         public List<string> filesToCombine = new List<string>();
-        public Dictionary<char, string> abcLines = new Dictionary<char, string>();
+
         public MainWindow()
         {
             InitializeComponent();
             var threads = System.Diagnostics.Process.GetCurrentProcess().Threads;
             Dispatcher.Invoke(() => { TextBoxThreads.Text = threads.Count.ToString(); });
+
+            List<char> allChars = new List<char>();
+            char value = char.MinValue;
+            while(value <= char.MinValue + 100)
+            {
+                allChars.Add(value++);
+            }
+
+            allChars.OrderBy(r => r);
+
+            ListBoxChars.ItemsSource = allChars;
         }
 
         private static Random random = new Random();
@@ -54,8 +66,10 @@ namespace BigData
             long size = 0;
             string dirName = "";
             string fileName = "";
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Text files (*.txt)|*.txt";
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Filter = "Text files (*.txt)|*.txt"
+            };
             if (openFileDialog.ShowDialog() == true)
             {
                 StartFileInfo = info = new FileInfo(openFileDialog.FileName);
@@ -63,6 +77,8 @@ namespace BigData
                 StartFileName = fileName = openFileDialog.FileName;
                 size = info.Length;
                 filesToDivide.Add(fileName);
+                BigFileRepository.filesToDivide.Clear();
+                BigFileRepository.filesToDivide.Add(fileName);
             }
 
             ///// Dividing
@@ -74,48 +90,52 @@ namespace BigData
             var longSize = long.Parse(strSize);
             if (size > longSize)
             {
-                await Task.Run(() =>
-                {
-                    //TextBoxDone.Text = "Working";
-                    int indexChar = 0;
-                    List<string> listFiles = new List<string>();
-                    while (filesToDivide.Count > 0)
-                    {
-                        listFiles = new List<string>();
+                TextBoxInfo.Text = "Dividing started";
+                await BigFileRepository.DivideFile(fileName, longSize);
+                TextBoxInfo.Text = "Dividing finished";
 
-                        Parallel.For(0, filesToDivide.Count, (i) =>
-                        {
-                            var threads = System.Diagnostics.Process.GetCurrentProcess().Threads;
-                            Dispatcher.Invoke(() => { TextBoxThreads.Text = threads.Count.ToString(); });
+                //await Task.Run(() =>
+                //{
+                //    //TextBoxDone.Text = "Working";
+                //    int indexChar = 0;
+                //    List<string> listFiles = new List<string>();
+                //    while (filesToDivide.Count > 0)
+                //    {
+                //        listFiles = new List<string>();
 
-                            if (filesToDivide[i] == fileName)
-                            {
-                                DivideIntoFiles(filesToDivide[i], listFiles, indexChar, false);
-                            }
-                            else
-                            {
-                                DivideIntoFiles(filesToDivide[i], listFiles, indexChar);
-                            }
-                        });
+                //        Parallel.For(0, filesToDivide.Count, (i) =>
+                //        {
+                //            var threads = System.Diagnostics.Process.GetCurrentProcess().Threads;
+                //            Dispatcher.Invoke(() => { TextBoxThreads.Text = threads.Count.ToString(); });
 
-                        Dispatcher.Invoke(() => { TextBoxDone.Text = "Dividing " + filesToDivide.Count; });
+                //            if (filesToDivide[i] == fileName)
+                //            {
+                //                DivideIntoFiles(filesToDivide[i], listFiles, indexChar, false);
+                //            }
+                //            else
+                //            {
+                //                DivideIntoFiles(filesToDivide[i], listFiles, indexChar);
+                //            }
+                //        });
 
-                        filesToDivide.Clear();
-                        for (int i = 0; i < listFiles.Count; i++)
-                        {
-                            if (listFiles[i].Contains("__"))
-                            {
-                                continue;
-                            }
-                            var sizeD = GetFileSize(listFiles[i]);
-                            if (sizeD > longSize)
-                            {
-                                filesToDivide.Add(listFiles[i]);
-                            }
-                        }
-                        indexChar++;
-                    }
-                });
+                //        Dispatcher.Invoke(() => { TextBoxDone.Text = "Dividing " + filesToDivide.Count; });
+
+                //        filesToDivide.Clear();
+                //        for (int i = 0; i < listFiles.Count; i++)
+                //        {
+                //            if (listFiles[i].Contains("  "))
+                //            {
+                //                continue;
+                //            }
+                //            var sizeD = GetFileSize(listFiles[i]);
+                //            if (sizeD > longSize)
+                //            {
+                //                filesToDivide.Add(listFiles[i]);
+                //            }
+                //        }
+                //        indexChar++;
+                //    }
+                //});
             }
 
             ///// Sorting
@@ -169,7 +189,7 @@ namespace BigData
                         if (str.Length > charNum)
                         {
                             var fileNameW = System.IO.Path.GetFileNameWithoutExtension(info.Name);
-                            var fileWrite = System.IO.Path.Combine(info.DirectoryName, fileNameW + "_" + str[charNum] + ".txt");
+                            var fileWrite = System.IO.Path.Combine(info.DirectoryName, fileNameW + " " + str[charNum] + ".txt");
 
                             File.OpenWrite(fileWrite).Close();
                             if (!listFiles.Contains(fileWrite))
@@ -185,7 +205,7 @@ namespace BigData
                         else
                         {
                             var fileNameW = System.IO.Path.GetFileNameWithoutExtension(info.Name);
-                            var fileWrite = System.IO.Path.Combine(info.DirectoryName, fileNameW + "__.txt");
+                            var fileWrite = System.IO.Path.Combine(info.DirectoryName, fileNameW + "  " + ".txt");
 
                             File.OpenWrite(fileWrite).Close();
                             if (!listFiles.Contains(fileWrite))
@@ -303,6 +323,7 @@ namespace BigData
 
         private void GetFilesToSort(string dirName)
         {
+            filesToCombine.Clear();
             string[] fileEntries = Directory.GetFiles(dirName);
             foreach (string fileName in fileEntries)
             {
@@ -348,32 +369,6 @@ namespace BigData
             return records.OrderBy(r => r.Line).ThenBy(n => n.Number).ToList();
         }
 
-        //private async Task<List<string>> ReadFileAsync()
-        //{
-        //    try
-        //    {
-        //        List<string> lines = new List<string>();
-        //        OpenFileDialog openFileDialog = new OpenFileDialog();
-        //        openFileDialog.Filter = "Text files (*.txt)|*.txt";
-        //        if (openFileDialog.ShowDialog() == true)
-        //        {
-        //            using (StreamReader sr = new StreamReader(openFileDialog.FileName))
-        //            {
-        //                while (sr.Peek() >= 0)
-        //                {
-        //                    var text = await sr.ReadLineAsync();
-        //                    lines.Add(text);
-        //                }
-        //            }
-        //        }
-        //        return lines;
-        //    }
-        //    catch
-        //    {
-        //        return new List<string>();
-        //    }
-        //}
-
         private void ButtonGenerate_Click(object sender, RoutedEventArgs e)
         {
             var sn = TextBoxStringsNumber.Text.Trim();
@@ -389,11 +384,13 @@ namespace BigData
         {
             try
             {
-                SaveFileDialog saveFileDialog = new SaveFileDialog();
-                saveFileDialog.Filter = "Text files (*.txt)|*.txt";
-                saveFileDialog.DefaultExt = "txt";
-                saveFileDialog.AddExtension = true;
-                saveFileDialog.FileName = "Yarema";
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "Text files (*.txt)|*.txt",
+                    DefaultExt = "txt",
+                    AddExtension = true,
+                    FileName = "Yarema"
+                };
                 if (saveFileDialog.ShowDialog() == true)
                 {
                     using (StreamWriter sw = new StreamWriter(saveFileDialog.FileName, false, Encoding.Unicode))
@@ -436,33 +433,7 @@ namespace BigData
 
             }
         }
-
-        private async Task WriteFileAsync()
-        {
-            try
-            {
-                SaveFileDialog saveFileDialog = new SaveFileDialog();
-                saveFileDialog.Filter = "Text files (*.txt)|*.txt";
-                saveFileDialog.DefaultExt = "txt";
-                saveFileDialog.AddExtension = true;
-                saveFileDialog.FileName = "Yarema";
-                if (saveFileDialog.ShowDialog() == true)
-                {
-                    using (StreamWriter sw = new StreamWriter(saveFileDialog.FileName))
-                    {
-                        //foreach (var line in lines)
-                        //{
-                        //    await sw.WriteLineAsync(line);
-                        //}
-                    }
-                }
-            }
-            catch
-            {
-
-            }
-        }
-
+        
         private void ButtonSort_Click(object sender, RoutedEventArgs e)
         {
             TextBoxDone.Text = "Start sort";
@@ -475,6 +446,116 @@ namespace BigData
             if (loopResult.IsCompleted)
             {
                 TextBoxDone.Text = "Sorted";
+            }
+        }
+
+        private void MakeCombineList()
+        {
+            GetFilesToSort(StartDirName);
+            var files = filesToCombine.Select(r => System.IO.Path.GetFileNameWithoutExtension(r)).ToList();
+            files = files.OrderBy(r => r).ToList();
+            ListBoxFiles.ItemsSource = files;
+            filesToCombine = files.Select(r => string.Format(r + ".txt")).ToList();
+        }
+
+        private void ButtonFiles_Click(object sender, RoutedEventArgs e)
+        {
+            MakeCombineList();
+        }
+
+        private void ButtonCombine_Click(object sender, RoutedEventArgs e)
+        {
+            string fileWrite = "";
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = "Text files (*.txt)|*.txt",
+                DefaultExt = "txt",
+                AddExtension = true,
+                FileName = "Result"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                fileWrite = saveFileDialog.FileName;
+                for (int i = 0; i < filesToCombine.Count; i++)
+                {
+                    var fileRead = System.IO.Path.Combine(StartDirName, filesToCombine[i]);
+                    MergeFile(fileRead, fileWrite);
+                }
+            }
+        }
+
+        private void MergeFile(string fileRead, string fileWrite)
+        {
+            using (StreamWriter sw = new StreamWriter(fileWrite, true, Encoding.Unicode))
+            {
+                using (StreamReader sr = new StreamReader(fileRead))
+                {
+                    while (sr.Peek() >= 0)
+                    {
+                        var textLine = sr.ReadLine();
+                        sw.WriteLine(textLine);
+                    }
+                }
+            }
+        }
+
+        private async void ButtonCreateBigFile_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = "Text files (*.txt)|*.txt",
+                DefaultExt = "txt",
+                AddExtension = true,
+                FileName = "BigFile"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                var number = int.Parse(TextBoxLettersNumber.Text.Trim());
+                var start = int.Parse(TextBoxStart.Text.Trim());
+                var end = int.Parse(TextBoxEnd.Text.Trim());
+                var recordsNumber = int.Parse(TextBoxStringsNumber.Text.Trim());
+
+                TextBoxInfo.Text = "BigFile start creating";
+                await Task.Run(() =>
+                {
+                    using (StreamWriter sw = new StreamWriter(saveFileDialog.FileName, false, Encoding.Unicode))
+                    {
+                        for (int i = 0; i < recordsNumber; i++)
+                        {
+                            var record = CreateFile.CreateRecord(number, start, end);
+                            sw.WriteLine(record.GetString);
+                        }
+                    }
+                });
+                TextBoxInfo.Text = "BigFile created";
+            }
+        }
+
+        private async Task<int> ReadDictionary(string fileName)
+        {
+            var number = await Task.Run(() =>
+            {
+                //var info = new FileInfo(fileName);
+                //BigFileRepository.StartFileInfo = info;
+                //BigFileRepository.StartFileName = info.Name;
+                //BigFileRepository.StartDirName = info.DirectoryName;
+                return CreateFile.ReadDictionary(fileName);
+            });
+            return number;
+        }
+
+        private async void ButtonDictionary_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Filter = "Text files (*.txt)|*.txt"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                TextBoxInfo.Text = "Loading dictionary";
+                var number = await ReadDictionary(openFileDialog.FileName);
+                TextBoxInfo.Text = "Dictionary loaded";
+                TextBoxWordsInDictionary.Text = number.ToString();
             }
         }
     }
