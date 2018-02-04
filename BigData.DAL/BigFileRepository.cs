@@ -29,60 +29,57 @@ namespace BigData.DAL
 
         public static void PrepareFilesToDivide()
         {
-            filesToDivide.Clear();
-            filesToDivide.Add(StartFileName);
+            //filesToDivide.Clear();
+            //filesToDivide.Add(StartFileName);
 
-            //filesToStartDivide.Clear();
-            //var info = new FileInfo(StartFileName);
-            //var number = info.Length / LongSizeStart;
-            //using (StreamReader sr = new StreamReader(StartFileName))
-            //{
-            //    while (sr.Peek() >= 0)
-            //    {
-            //        var tasks = new List<Task>();
-            //        for (int i = 0; i < number; i++)
-            //        {
-            //            if (sr.Peek() >= 0)
-            //            {
-            //                var fileNameW = Path.GetFileNameWithoutExtension(info.Name);
-            //                var fileWrite = Path.Combine(info.DirectoryName, fileNameW + "!" + i + ".txt");
-            //                if (!filesToStartDivide.Contains(fileWrite))
-            //                {
-            //                    filesToStartDivide.Add(fileWrite);
-            //                }
-            //                //tasks.Add(Task.Run(() =>
-            //                //{
-            //                //    lock (locker)
-            //                //    {
-            //                //        using (StreamWriter sw = new StreamWriter(fileWrite, true))
-            //                //        {
-            //                //            try
-            //                //            {
-            //                //                var textLine = sr.ReadLine();
-            //                //                sr.DiscardBufferedData();
-            //                //                sw.WriteLine(textLine);
-            //                //                sw.Flush();
-            //                //            }
-            //                //            catch { }
-            //                //        }
-            //                //    }
-            //                //}));
+            filesToStartDivide.Clear();
+            var info = new FileInfo(StartFileName);
+            var number = info.Length / LongSizeStart;
+            using (StreamReader sr = new StreamReader(StartFileName))
+            {
+                while (sr.Peek() >= 0)
+                {
+                    //var tasks = new List<Task>();
+                    for (int i = 0; i < number; i++)
+                    {
+                        if (sr.Peek() >= 0)
+                        {
+                            var fileNameW = Path.GetFileNameWithoutExtension(info.Name);
+                            var fileWrite = Path.Combine(info.DirectoryName, fileNameW + "!" + i + ".txt");
+                            if (!filesToStartDivide.Contains(fileWrite))
+                            {
+                                filesToStartDivide.Add(fileWrite);
+                            }
+                            //tasks.Add(Task.Run(() =>
+                            //{
+                            //    using (StreamWriter sw = new StreamWriter(fileWrite, true))
+                            //    {
+                            //        try
+                            //        {
+                            //            var textLine = sr.ReadLine();
+                            //            sr.DiscardBufferedData();
+                            //            sw.WriteLine(textLine);
+                            //            sw.Flush();
+                            //        }
+                            //        catch { }
+                            //    }
+                            //}));
 
-            //                using (StreamWriter sw = new StreamWriter(fileWrite, true))
-            //                {
-            //                    try
-            //                    {
-            //                        var textLine = sr.ReadLine();
-            //                        sw.WriteLine(textLine);
-            //                        sw.Flush();
-            //                    }
-            //                    catch { }
-            //                }
-            //            }
-            //        }
-            //        //Task.WaitAll(tasks.ToArray());
-            //    }
-            //}
+                            using (StreamWriter sw = new StreamWriter(fileWrite, true))
+                            {
+                                try
+                                {
+                                    var textLine = sr.ReadLine();
+                                    sw.WriteLine(textLine);
+                                    sw.Flush();
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                    //Task.WaitAll(tasks.ToArray());
+                }
+            }
         }
 
         public static async Task DivideFile()
@@ -94,32 +91,32 @@ namespace BigData.DAL
                 int indexChar = 0;
                 List<string> listFiles = new List<string>();
 
-                //if (filesToStartDivide.Count > 0)
-                //{
-                //    listFiles = new List<string>();
+                if (filesToStartDivide.Count > 0)
+                {
+                    listFiles = new List<string>();
 
-                //    //Parallel.For(0, filesToStartDivide.Count, (i) =>
-                //    //{
-                //    //    DivideStartFile(filesToStartDivide[i], listFiles, indexChar);
-                //    //});
+                    //Parallel.For(0, filesToStartDivide.Count, (i) =>
+                    //{
+                    //    DivideStartFile(filesToStartDivide[i], listFiles, indexChar);
+                    //});
 
-                //    int num = filesToStartDivide.Count;
-                //    for (int i = 0; i < num; i++)
-                //    {
-                //        DivideStartFile(filesToStartDivide[i], listFiles, indexChar);
-                //    }
+                    int num = filesToStartDivide.Count;
+                    for (int i = 0; i < num; i++)
+                    {
+                        DivideStartFile(filesToStartDivide[i], listFiles, indexChar);
+                    }
 
-                //    filesToDivide.Clear();
-                //    for (int i = 0; i < listFiles.Count; i++)
-                //    {
-                //        var sizeD = GetFileSize(listFiles[i]);
-                //        if (sizeD > MaximumSize)
-                //        {
-                //            filesToDivide.Add(listFiles[i]);
-                //        }
-                //    }
-                //    indexChar++;
-                //}
+                    filesToDivide.Clear();
+                    for (int i = 0; i < listFiles.Count; i++)
+                    {
+                        var sizeD = GetFileSize(listFiles[i]);
+                        if (sizeD > MaximumSize)
+                        {
+                            filesToDivide.Add(listFiles[i]);
+                        }
+                    }
+                    indexChar++;
+                }
 
                 while (filesToDivide.Count > 0)
                 {
@@ -416,15 +413,18 @@ namespace BigData.DAL
 
         private static void MergeFile(string fileRead, string fileWrite)
         {
-            using (StreamWriter sw = new StreamWriter(fileWrite, true))
+            if (File.Exists(fileRead))
             {
-                using (StreamReader sr = new StreamReader(fileRead))
+                using (StreamWriter sw = new StreamWriter(fileWrite, true))
                 {
-                    while (sr.Peek() >= 0)
+                    using (StreamReader sr = new StreamReader(fileRead))
                     {
-                        var textLine = sr.ReadLine();
-                        sw.WriteLine(textLine);
-                        sw.Flush();
+                        while (sr.Peek() >= 0)
+                        {
+                            var textLine = sr.ReadLine();
+                            sw.WriteLine(textLine);
+                            sw.Flush();
+                        }
                     }
                 }
             }
