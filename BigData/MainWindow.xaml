@@ -5,26 +5,95 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BigData"
         mc:Ignorable="d"
-        Title="MainWindow" Height="400" Width="600" WindowStartupLocation="CenterScreen">
+        Title="MainWindow" Height="600" Width="800" WindowStartupLocation="CenterScreen">
     <Grid>
-        <Button x:Name="ButtonReadFile" Content="Read file" HorizontalAlignment="Left" Margin="405,11,0,0" VerticalAlignment="Top" Width="75" Click="ButtonReadFile_Click"/>
-        <TextBox x:Name="TextBoxSize" HorizontalAlignment="Left" Height="23" Margin="10,26,0,0" TextWrapping="Wrap" Text="2000" VerticalAlignment="Top" Width="56"/>
-        <Button x:Name="ButtonGenerate" Content="Generate strings" HorizontalAlignment="Left" Margin="405,84,0,0" VerticalAlignment="Top" Width="109" Click="ButtonGenerate_Click"/>
-        <TextBox x:Name="TextBoxLettersNumber" HorizontalAlignment="Left" Height="23" Margin="10,84,0,0" TextWrapping="Wrap" Text="5" VerticalAlignment="Top" Width="56"/>
-        <TextBox x:Name="TextBoxStringsNumber" HorizontalAlignment="Left" Height="23" Margin="10,138,0,0" TextWrapping="Wrap" Text="1000" VerticalAlignment="Top" Width="56"/>
-        <TextBox x:Name="TextBoxDone" HorizontalAlignment="Left" Height="23" Margin="405,121,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
-        <Button x:Name="ButtonSort" Content="Sort" HorizontalAlignment="Left" Margin="405,47,0,0" VerticalAlignment="Top" Width="75" Click="ButtonSort_Click"/>
-        <TextBox x:Name="TextBoxThreads" HorizontalAlignment="Left" Height="23" Margin="10,187,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="56"/>
-        <ListBox x:Name="ListBoxFiles" HorizontalAlignment="Left" Height="349" Margin="200,10,0,0" VerticalAlignment="Top" Width="189"/>
-        <Button x:Name="ButtonFiles" Content="Make list" HorizontalAlignment="Left" Margin="405,172,0,0" VerticalAlignment="Top" Width="75" Click="ButtonFiles_Click" RenderTransformOrigin="0.507,-0.8"/>
-        <Button x:Name="ButtonCombine" Content="Merge to file" HorizontalAlignment="Left" Margin="405,210,0,0" VerticalAlignment="Top" Width="90" Click="ButtonCombine_Click"/>
-        <ListBox x:Name="ListBoxChars" HorizontalAlignment="Left" Height="349" Margin="93,10,0,0" VerticalAlignment="Top" Width="84"/>
-        <Button x:Name="ButtonCreateBigFile" Content="Create big file" HorizontalAlignment="Left" Margin="405,253,0,0" VerticalAlignment="Top" Width="120" Click="ButtonCreateBigFile_Click"/>
-        <Button x:Name="ButtonDictionary" Content="Read dictionary" HorizontalAlignment="Left" Margin="405,297,0,0" VerticalAlignment="Top" Width="120" Click="ButtonDictionary_Click"/>
-        <TextBox x:Name="TextBoxInfo" HorizontalAlignment="Left" Height="23" Margin="405,336,0,0" TextWrapping="Wrap" Text="Info" VerticalAlignment="Top" Width="177"/>
-        <TextBox x:Name="TextBoxStart" HorizontalAlignment="Left" Height="23" Margin="10,253,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="78"/>
-        <TextBox x:Name="TextBoxEnd" HorizontalAlignment="Left" Height="23" Margin="10,322,0,0" TextWrapping="Wrap" Text="100" VerticalAlignment="Top" Width="78"/>
-        <TextBox x:Name="TextBoxWordsInDictionary" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="10,289,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="78"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <GroupBox Header="File size" Grid.Row="0" Grid.Column="0">
+                <TextBox x:Name="TextBoxSize" TextWrapping="Wrap" Text="2000"/>
+            </GroupBox>
+            <GroupBox Grid.Row="0" Grid.Column="1">
+                <Button x:Name="ButtonReadFile" Content="Divide file"  Click="ButtonReadFile_Click"/>
+            </GroupBox>
+            <GroupBox Header="Threads" Grid.Row="1" Grid.Column="0">
+                <TextBox x:Name="TextBoxThreads" HorizontalAlignment="Left" Height="23" Margin="10,187,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="56"/>
+            </GroupBox>
+            <GroupBox Grid.Row="1" Grid.Column="1">
+                <Button x:Name="ButtonSort" Content="Sort" Click="ButtonSort_Click"/>
+            </GroupBox>
+            <GroupBox Header="Start size" Grid.Row="2" Grid.Column="0">
+                <TextBox x:Name="TextBoxLongSizeStart">50000</TextBox>
+            </GroupBox>
+            <GroupBox Grid.Row="2" Grid.Column="1">
+                <Button x:Name="ButtonFiles" Content="Make list" Click="ButtonFiles_Click" RenderTransformOrigin="0.507,-0.8"/>
+            </GroupBox>
+            <GroupBox Header="Words in record" Grid.Row="3" Grid.Column="0">
+                <TextBox x:Name="TextBoxLettersNumber" TextWrapping="Wrap" Text="5"/>
+            </GroupBox>
+            <GroupBox Grid.Row="3" Grid.Column="1">
+                <Button x:Name="ButtonCombine" Content="Merge to file" Click="ButtonCombine_Click"/>
+            </GroupBox>
+            <GroupBox Header="Records in file" Grid.Row="4" Grid.Column="0">
+                <TextBox x:Name="TextBoxStringsNumber" TextWrapping="Wrap" Text="1000" />
+            </GroupBox>
+            <GroupBox Grid.Row="4" Grid.Column="1">
+                <Button x:Name="ButtonCreateBigFile" Content="Create big file" Click="ButtonCreateBigFile_Click"/>
+            </GroupBox>
+            <GroupBox Header="Information" Grid.Row="5" Grid.Column="0">
+                <TextBox x:Name="TextBoxInfo" TextWrapping="Wrap" Text="" />
+            </GroupBox>
+            <GroupBox Grid.Row="5" Grid.Column="1">
+                <Button x:Name="ButtonDictionary" Content="Read dictionary" Click="ButtonDictionary_Click"/>
+            </GroupBox>
+            <GroupBox Header="Start word index" Grid.Row="6" Grid.Column="0">
+                <TextBox x:Name="TextBoxStart" TextWrapping="Wrap" Text="1"/>
+            </GroupBox>
+            <GroupBox Header="End word index" Grid.Row="6" Grid.Column="1">
+                <TextBox x:Name="TextBoxEnd" TextWrapping="Wrap" Text="100"/>
+            </GroupBox>
+            <GroupBox Header="Words in dictionary" Grid.Row="7" Grid.Column="0">
+                <TextBox x:Name="TextBoxWordsInDictionary" IsReadOnly="True" HorizontalAlignment="Left" Height="23" Margin="10,289,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="78"/>
+            </GroupBox>
+            <GroupBox Grid.Row="7" Grid.Column="1">
+                <Button x:Name="ButtonGenerate" Content="Generate strings" Click="ButtonGenerate_Click"/>
+            </GroupBox>
+        </Grid>
+        <Grid Grid.Column="1">            
+        </Grid>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
     </Grid>
 </Window>

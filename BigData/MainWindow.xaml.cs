@@ -21,16 +21,16 @@ namespace BigData
             var threads = System.Diagnostics.Process.GetCurrentProcess().Threads;
             Dispatcher.Invoke(() => { TextBoxThreads.Text = threads.Count.ToString(); });
 
-            List<char> allChars = new List<char>();
-            char value = char.MinValue;
-            while(value <= char.MinValue + 100)
-            {
-                allChars.Add(value++);
-            }
+            //List<char> allChars = new List<char>();
+            //char value = char.MinValue;
+            //while(value <= char.MinValue + 100)
+            //{
+            //    allChars.Add(value++);
+            //}
 
-            allChars.OrderBy(r => r);
+            //allChars.OrderBy(r => r);
 
-            ListBoxChars.ItemsSource = allChars;
+            //ListBoxChars.ItemsSource = allChars;
         }
 
         private static Random random = new Random();
@@ -44,25 +44,15 @@ namespace BigData
 
         private async void ButtonReadFile_Click(object sender, RoutedEventArgs e)
         {
-            ///// Start
-            TextBoxDone.Text = "Start";
-
-            FileInfo info = null;
-            long size = 0;
-            string dirName = "";
-            string fileName = "";
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
                 Filter = "Text files (*.txt)|*.txt"
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                BigFileRepository.StartFileInfo = info = new FileInfo(openFileDialog.FileName);
-                BigFileRepository.StartDirName = dirName = info.DirectoryName;
-                BigFileRepository.StartFileName = fileName = openFileDialog.FileName;
-                BigFileRepository.filesToDivide.Clear();
-                BigFileRepository.filesToDivide.Add(fileName);
-                size = info.Length;
+                BigFileRepository.StartFileInfo = new FileInfo(openFileDialog.FileName);
+                BigFileRepository.StartDirName = BigFileRepository.StartFileInfo.DirectoryName;
+                BigFileRepository.StartFileName = openFileDialog.FileName;
             }
 
             ///// Dividing
@@ -71,12 +61,22 @@ namespace BigData
             {
                 return;
             }
-            var longSize = long.Parse(strSize);
-            if (size > longSize)
+            BigFileRepository.MaximumSize = long.Parse(strSize);
+
+            var longSize = TextBoxLongSizeStart.Text.Trim();
+            if (string.IsNullOrEmpty(longSize))
             {
-                TextBoxInfo.Text = "Dividing started";
-                await BigFileRepository.DivideFile(fileName, longSize);
-                TextBoxInfo.Text = "Dividing finished";
+                return;
+            }
+            BigFileRepository.LongSizeStart = long.Parse(longSize);
+            if (BigFileRepository.LongSizeStart > 0)
+            {
+                if ((BigFileRepository.StartFileInfo?.Length ?? 0) > BigFileRepository.MaximumSize)
+                {
+                    TextBoxInfo.Text = "Dividing started";
+                    await BigFileRepository.DivideFile();
+                    TextBoxInfo.Text = "Dividing finished";
+                }
             }
         }
         
@@ -116,24 +116,28 @@ namespace BigData
                             {
                                 stringLine = i + ". " + randomString;
                                 sw.WriteLine(stringLine);
+                                sw.Flush();
                             }
                             else
                             if (i % 10 == 0)
                             {
                                 stringLine = i + ". " + randomString;
                                 sw.WriteLine(stringLine);
+                                sw.Flush();
                             }
                             else
                             if (i % 15 == 0)
                             {
                                 stringLine = i + ". " + randomString;
                                 sw.WriteLine(stringLine);
+                                sw.Flush();
                             }
                             else
                             {
                                 randomString = RandomString(lettersNumbers).Trim();
                                 stringLine = i + ". " + randomString;
                                 sw.WriteLine(stringLine);
+                                sw.Flush();
                             }
                         }
                     }
@@ -147,7 +151,7 @@ namespace BigData
         
         private void ButtonSort_Click(object sender, RoutedEventArgs e)
         {
-            TextBoxDone.Text = "Sort started";
+            TextBoxInfo.Text = "Sort started";
             BigFileRepository.GetFilesToSort();
             ParallelLoopResult loopResult = Parallel.For(0, BigFileRepository.filesToCombine.Count, (i) =>
             {
@@ -211,6 +215,7 @@ namespace BigData
                         {
                             var record = CreateFile.CreateRecord(number, start, end);
                             sw.WriteLine(record.GetString);
+                            sw.Flush();
                         }
                     }
                 });
