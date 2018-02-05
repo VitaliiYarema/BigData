@@ -8,7 +8,8 @@
         Title="MainWindow" Height="600" Width="800" WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="10*"></ColumnDefinition>
+            <ColumnDefinition Width="3*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Grid Grid.Column="0">
             <Grid.ColumnDefinitions>
@@ -75,8 +76,12 @@
             <GroupBox Grid.Row="7" Grid.Column="1">
                 <Button x:Name="ButtonGenerate" Content="Generate strings" Click="ButtonGenerate_Click"/>
             </GroupBox>
+            <Grid Grid.Column="2" Grid.RowSpan="9">
+                <ListBox x:Name="ListBoxNames" ItemsSource="{Binding}"></ListBox>
+            </Grid>
         </Grid>
-        <Grid Grid.Column="1">            
+        <Grid Grid.Column="1">
+            <ListBox></ListBox>
         </Grid>
         
         
