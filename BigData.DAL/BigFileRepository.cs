@@ -31,9 +31,6 @@ namespace BigData.DAL
         {
             try
             {
-                //filesToDivide.Clear();
-                //filesToDivide.Add(StartFileName);
-
                 filesToStartDivide.Clear();
                 var info = new FileInfo(StartFileName);
                 var number = info.Length / LongSizeStart;
