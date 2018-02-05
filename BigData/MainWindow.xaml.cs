@@ -20,17 +20,6 @@ namespace BigData
             InitializeComponent();
             var threads = System.Diagnostics.Process.GetCurrentProcess().Threads;
             Dispatcher.Invoke(() => { TextBoxThreads.Text = threads.Count.ToString(); });
-
-            //List<char> allChars = new List<char>();
-            //char value = char.MinValue;
-            //while(value <= char.MinValue + 100)
-            //{
-            //    allChars.Add(value++);
-            //}
-
-            //allChars.OrderBy(r => r);
-
-            //ListBoxChars.ItemsSource = allChars;
         }
 
         private static Random random = new Random();
