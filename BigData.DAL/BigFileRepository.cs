@@ -9,23 +9,16 @@ namespace BigData.DAL
 {
     public static class BigFileRepository
     {
-        public static string Marker { get; set; }
         public static FileInfo StartFileInfo { get; set; }
         public static string StartFileName { get; set; }
         public static string StartDirName { get; set; }
         public static List<string> filesToStartDivide = new List<string>();
         private static List<string> filesToDivide = new List<string>();
-        public static List<string> filesToCombine = new List<string>();
         public static long MaximumSize { get; set; }
         public static long LongSizeStart { get; set; }
-        private static List<string> filesInUse = new List<string>();
         public static Dictionary<string, int> names = new Dictionary<string, int>();
         private static int indexName = 0;
         private static readonly object sync = new object();
-
-        static BigFileRepository()
-        {
-        }
 
         public static string PrepareFilesToDivide()
         {
@@ -93,11 +86,6 @@ namespace BigData.DAL
                     if (filesToStartDivide.Count > 0)
                     {
                         listFiles = new List<string>();
-
-                        //Parallel.For(0, filesToStartDivide.Count, (i) =>
-                        //{
-                        //    messages.Add(DivideStartFile(filesToStartDivide[i], listFiles, indexChar));
-                        //});
 
                         int num = filesToStartDivide.Count;
                         for (int i = 0; i < num; i++)
@@ -372,10 +360,25 @@ namespace BigData.DAL
                 return exc.Message;
             }
         }
-        
-        public static void GetFilesToSort()
+
+        public static bool SortAllFiles()
         {
-            filesToCombine.Clear();
+            var filesToCombine = GetFilesToSort();
+            ParallelLoopResult loopResult = Parallel.For(0, filesToCombine.Count, (i) =>
+            {
+                SortFile(filesToCombine[i]);
+            });
+
+            if (loopResult.IsCompleted)
+            {
+               return true;
+            }
+            return false;
+        }
+        
+        public static List<string> GetFilesToSort()
+        {
+            var filesToCombine = new List<string>();
             string[] fileEntries = Directory.GetFiles(StartDirName);
             foreach (string fileName in fileEntries)
             {
@@ -386,11 +389,12 @@ namespace BigData.DAL
                     filesToCombine.Add(fileName);
                 }
             }
+            return filesToCombine;
         }
 
         public static void SortFile(string fileName)
         {
-            List<Record> records = new List<Record>();
+            var records = new List<Record>();
             using (StreamReader sr = new StreamReader(fileName))
             {
                 while (sr.Peek() >= 0)
@@ -422,15 +426,11 @@ namespace BigData.DAL
             return records.OrderBy(r => r.Line).ThenBy(n => n.Number).ToList();
         }
 
-        public static void MakeCombineList()
+        public static List<string> MakeCombineList()
         {
-            //GetFilesToSort();
             var startName = Path.GetFileNameWithoutExtension(StartFileName);
-            //var files = filesToCombine.Select(r => Path.GetFileNameWithoutExtension(r)).ToList();
             var allNames = names.OrderBy(r => r.Key).ToList();
-            
-            //files = files.OrderBy(r => r).ToList();
-            filesToCombine = allNames.Select(r => string.Format(startName + "_" + r.Value + ".txt")).ToList();
+            return allNames.Select(r => string.Format(startName + "_" + r.Value + ".txt")).ToList();
         }
 
         private static void MergeFile(string fileRead, string fileWrite)
@@ -457,6 +457,7 @@ namespace BigData.DAL
         {            
             await Task.Run(() =>
             {
+                var filesToCombine = MakeCombineList();
                 File.Create(fileWrite).Close();
                 for (int i = 0; i < filesToCombine.Count; i++)
                 {
