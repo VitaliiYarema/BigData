@@ -74,8 +74,10 @@ namespace BigData
                 if ((BigFileRepository.StartFileInfo?.Length ?? 0) > BigFileRepository.MaximumSize)
                 {
                     TextBoxInfo.Text = "Dividing started";
-                    await BigFileRepository.DivideFile();
+                    var message = await BigFileRepository.DivideFile();
                     TextBoxInfo.Text = "Dividing finished";
+                    ListBoxNames.DataContext = BigFileRepository.names;
+                    MessageBox.Show(message);
                 }
             }
         }
@@ -179,7 +181,7 @@ namespace BigData
                 Filter = "Text files (*.txt)|*.txt",
                 DefaultExt = "txt",
                 AddExtension = true,
-                FileName = "Result"
+                FileName = "Result"                
             };
             if (saveFileDialog.ShowDialog() == true)
             {
