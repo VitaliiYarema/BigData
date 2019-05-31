@@ -15,6 +15,8 @@ namespace BigData
         public MainWindow()
         {
             InitializeComponent();
+            BigFileRepository.StartDirName = Properties.Settings.Default.StartDirName;
+            BigFileRepository.StartFileName = Properties.Settings.Default.StartFileName;
         }
         
         private async void ButtonReadFile_Click(object sender, RoutedEventArgs e)
@@ -27,7 +29,10 @@ namespace BigData
             {
                 BigFileRepository.StartFileInfo = new FileInfo(openFileDialog.FileName);
                 BigFileRepository.StartDirName = BigFileRepository.StartFileInfo.DirectoryName;
+                Properties.Settings.Default.StartDirName = BigFileRepository.StartDirName;
                 BigFileRepository.StartFileName = openFileDialog.FileName;
+                Properties.Settings.Default.StartFileName = BigFileRepository.StartFileName;
+                Properties.Settings.Default.Save();
 
 
                 ///// Dividing
@@ -55,14 +60,26 @@ namespace BigData
                 }
             }
         }
-        
+
         private void ButtonSort_Click(object sender, RoutedEventArgs e)
         {
+            //OpenFileDialog openFileDialog = new OpenFileDialog
+            //{
+            //    Filter = "Text files (*.txt)|*.txt"
+            //};
+            //if (openFileDialog.ShowDialog() == true)
+            //{
+            //    BigFileRepository.StartFileInfo = new FileInfo(openFileDialog.FileName);
+            //    BigFileRepository.StartDirName = BigFileRepository.StartFileInfo.DirectoryName;
+            //    //BigFileRepository.StartFileName = openFileDialog.FileName;
+            //}
+
             TextBoxInfo.Text = "Sort started";
             var result = BigFileRepository.SortAllFiles();
-            if(result)
+            if (result)
             {
                 TextBoxInfo.Text = "Sort finished";
+                return;
             }
 
             TextBoxInfo.Text = "Sorted with error";
