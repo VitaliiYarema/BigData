@@ -10,6 +10,7 @@ namespace BigData.DAL
 {
     public static class BigFileRepository
     {
+        public static string msg { get; set; }
         public static FileInfo StartFileInfo { get; set; }
         /// <summary>
         /// File to divide
@@ -132,6 +133,7 @@ namespace BigData.DAL
                     
                     while (filesToDivide.Count > 0)
                     {
+                        msg = filesToDivide.Count.ToString();
                         listFiles = new List<string>();
 
                         Parallel.For(0, filesToDivide.Count, (i) =>
@@ -140,18 +142,19 @@ namespace BigData.DAL
                         });
 
                         filesToDivide.Clear();
-                        for (int i = 0; i < listFiles.Count; i++)
+                        Parallel.For(0, listFiles.Count, (i) =>
                         {
                             if (names.Keys.Contains("AAAAAAAAAA") && listFiles[i].Contains("_" + names["AAAAAAAAAA"]))
                             {
-                                continue;
+                                return;
                             }
                             var sizeD = GetFileSize(listFiles[i]);
                             if (sizeD > MaximumSize)
                             {
                                 filesToDivide.Add(listFiles[i]);
                             }
-                        }
+                        });
+
                         indexChar++;
                     }
                 });
@@ -367,9 +370,9 @@ namespace BigData.DAL
                 //        var addName = str.Substring(0, charNum);
                 //        if (!names.Keys.Contains(addName))
                 //        {
-                //            Monitor.Enter(sync);
+                //            Monitor.Enter(names);
                 //            names.Add(addName, indexName++);
-                //            Monitor.Exit(sync);
+                //            Monitor.Exit(names);
                 //        }
 
                 //        var fileWrite = CreateFileName(names[addName].ToString());
@@ -380,12 +383,17 @@ namespace BigData.DAL
                 //        }
                 //        if (!listFiles.Contains(fileWrite))
                 //        {
+                //            Monitor.Enter(listFiles);
                 //            listFiles.Add(fileWrite);
+                //            Monitor.Exit(listFiles);
                 //        }
 
-                //        using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
+                //        lock (sync)
                 //        {
-                //            AddText(fileW, textLine);
+                //            using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
+                //            {
+                //                AddText(fileW, textLine);
+                //            }
                 //        }
                 //    }
                 //    else
@@ -393,9 +401,9 @@ namespace BigData.DAL
                 //        var addName = "AAAAAAAAAA";
                 //        if (!names.Keys.Contains(addName))
                 //        {
-                //            Monitor.Enter(sync);
+                //            Monitor.Enter(names);
                 //            names.Add(addName, indexName++);
-                //            Monitor.Exit(sync);
+                //            Monitor.Exit(names);
                 //        }
 
                 //        var fileWrite = CreateFileName(names[addName].ToString());
@@ -406,12 +414,17 @@ namespace BigData.DAL
                 //        }
                 //        if (!listFiles.Contains(fileWrite))
                 //        {
+                //            Monitor.Enter(listFiles);
                 //            listFiles.Add(fileWrite);
+                //            Monitor.Exit(listFiles);
                 //        }
 
-                //        using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
+                //        lock (sync)
                 //        {
-                //            AddText(fileW, textLine);
+                //            using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
+                //            {
+                //                AddText(fileW, textLine);
+                //            }
                 //        }
                 //    }
                 //});
@@ -531,7 +544,7 @@ namespace BigData.DAL
             foreach (string fileName in fileEntries)
             {
                 var info = new FileInfo(fileName);
-                var fileNameW = Path.GetFileNameWithoutExtension(StartFileInfo.Name);
+                var fileNameW = Path.GetFileNameWithoutExtension(StartFileName);
                 if (info.Name.Contains(fileNameW + "_"))
                 {
                     filesToCombine.Add(fileName);

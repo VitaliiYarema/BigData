@@ -1,5 +1,7 @@
 ﻿using BigData.DAL;
 using Microsoft.Win32;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,6 +29,7 @@ namespace BigData
             };
             if (openFileDialog.ShowDialog() == true)
             {
+                BigFileRepository.names = new Dictionary<string, int>();
                 BigFileRepository.StartFileInfo = new FileInfo(openFileDialog.FileName);
                 BigFileRepository.StartDirName = BigFileRepository.StartFileInfo.DirectoryName;
                 Properties.Settings.Default.StartDirName = BigFileRepository.StartDirName;
@@ -63,16 +66,16 @@ namespace BigData
 
         private void ButtonSort_Click(object sender, RoutedEventArgs e)
         {
-            //OpenFileDialog openFileDialog = new OpenFileDialog
-            //{
-            //    Filter = "Text files (*.txt)|*.txt"
-            //};
-            //if (openFileDialog.ShowDialog() == true)
-            //{
-            //    BigFileRepository.StartFileInfo = new FileInfo(openFileDialog.FileName);
-            //    BigFileRepository.StartDirName = BigFileRepository.StartFileInfo.DirectoryName;
-            //    //BigFileRepository.StartFileName = openFileDialog.FileName;
-            //}
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Filter = "Text files (*.txt)|*.txt"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                BigFileRepository.StartFileInfo = new FileInfo(openFileDialog.FileName);
+                BigFileRepository.StartDirName = BigFileRepository.StartFileInfo.DirectoryName;
+                //BigFileRepository.StartFileName = openFileDialog.FileName;
+            }
 
             TextBoxInfo.Text = "Sort started";
             var result = BigFileRepository.SortAllFiles();
@@ -106,34 +109,42 @@ namespace BigData
 
         private async void ButtonCreateBigFile_Click(object sender, RoutedEventArgs e)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog
+            var start = int.Parse(TextBoxStart.Text.Trim()); //TextBoxEnd
+            var end = int.Parse(TextBoxEnd.Text.Trim());
+            var dic = int.Parse(TextBoxWordsInDictionary.Text.Trim());
+            if (dic < start || dic < end)
             {
-                Filter = "Text files (*.txt)|*.txt",
-                DefaultExt = "txt",
-                AddExtension = true,
-                FileName = "BigFile"
-            };
-            if (saveFileDialog.ShowDialog() == true)
+                TextBoxInfo.Text = "Read dictionary first";
+            }
+            else
             {
-                var number = int.Parse(TextBoxWordsNumber.Text.Trim());
-                var start = int.Parse(TextBoxStart.Text.Trim());
-                var end = int.Parse(TextBoxEnd.Text.Trim());
-                var recordsNumber = int.Parse(TextBoxStringsNumber.Text.Trim());
-
-                TextBoxInfo.Text = "BigFile creating started";
-                await Task.Run(() =>
+                SaveFileDialog saveFileDialog = new SaveFileDialog
                 {
-                    using (StreamWriter sw = new StreamWriter(saveFileDialog.FileName, false, Encoding.Unicode))
+                    Filter = "Text files (*.txt)|*.txt",
+                    DefaultExt = "txt",
+                    AddExtension = true,
+                    FileName = "BigFile"
+                };
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    var number = int.Parse(TextBoxWordsNumber.Text.Trim());
+                    var recordsNumber = int.Parse(TextBoxStringsNumber.Text.Trim());
+
+                    TextBoxInfo.Text = "BigFile creating started";
+                    await Task.Run(() =>
                     {
-                        for (int i = 0; i < recordsNumber; i++)
+                        using (StreamWriter sw = new StreamWriter(saveFileDialog.FileName, false, Encoding.Unicode))
                         {
-                            var record = CreateFile.CreateRecord(number, start, end);
-                            sw.WriteLine(record.GetString);
-                            sw.Flush();
+                            for (int i = 0; i < recordsNumber; i++)
+                            {
+                                var record = CreateFile.CreateRecord(number, start, end);
+                                sw.WriteLine(record.GetString);
+                                sw.Flush();
+                            }
                         }
-                    }
-                });
-                TextBoxInfo.Text = "BigFile created";
+                    });
+                    TextBoxInfo.Text = "BigFile created";
+                }
             }
         }
 
@@ -158,6 +169,22 @@ namespace BigData
                 var number = await ReadDictionary(openFileDialog.FileName);
                 TextBoxInfo.Text = "Dictionary loaded";
                 TextBoxWordsInDictionary.Text = number.ToString();
+            }
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            var fileName = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Dictionary/names.txt");
+            string json = JsonConvert.SerializeObject(BigFileRepository.names);
+            File.WriteAllText(fileName, json);
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            var fileName = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Dictionary/names.txt");
+            if (File.Exists(fileName))
+            {
+                BigFileRepository.names = JsonConvert.DeserializeObject<Dictionary<string, int>>(File.ReadAllText(fileName));
             }
         }
     }
