@@ -46,20 +46,27 @@ namespace BigData
                 }
                 BigFileRepository.MaximumSize = long.Parse(strSize);
 
-                var longSize = TextBoxLongSizeStart.Text.Trim();
-                if (string.IsNullOrEmpty(longSize))
+                //var longSize = TextBoxLongSizeStart.Text.Trim();
+                //if (string.IsNullOrEmpty(longSize))
+                //{
+                //    return;
+                //}
+                //BigFileRepository.LongSizeStart = long.Parse(longSize);
+                //if (BigFileRepository.LongSizeStart > 0)
+                //{
+                //    if ((BigFileRepository.StartFileInfo?.Length ?? 0) > BigFileRepository.MaximumSize)
+                //    {
+                //        TextBoxInfo.Text = "Dividing started";
+                //        var message = await BigFileRepository.DivideFile();
+                //        TextBoxInfo.Text = "Dividing finished";
+                //    }
+                //}
+
+                if ((BigFileRepository.StartFileInfo?.Length ?? 0) > BigFileRepository.MaximumSize)
                 {
-                    return;
-                }
-                BigFileRepository.LongSizeStart = long.Parse(longSize);
-                if (BigFileRepository.LongSizeStart > 0)
-                {
-                    if ((BigFileRepository.StartFileInfo?.Length ?? 0) > BigFileRepository.MaximumSize)
-                    {
-                        TextBoxInfo.Text = "Dividing started";
-                        var message = await BigFileRepository.DivideFile();
-                        TextBoxInfo.Text = "Dividing finished";
-                    }
+                    TextBoxInfo.Text = "Dividing started";
+                    var message = await BigFileRepository.DivideFile();
+                    TextBoxInfo.Text = "Dividing finished";
                 }
             }
         }
