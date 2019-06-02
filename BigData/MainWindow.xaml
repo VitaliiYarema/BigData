@@ -5,48 +5,63 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BigData"
         mc:Ignorable="d"
-        Title="Big file sorting" Height="480" Width="600" WindowStartupLocation="CenterScreen" FontSize="20" FontFamily="Times New Roman">
+        Title="Big file sorting" Height="600" Width="800" WindowStartupLocation="CenterScreen" FontSize="20" FontFamily="Times New Roman" Closing="Window_Closing" Loaded="Window_Loaded">
+    <Window.Resources>
+        <Style TargetType="{x:Type Button}">
+            <Setter Property="Padding" Value="5"/>
+        </Style>
+        <local:StringToBoolConverter x:Key="StringToBool"></local:StringToBoolConverter>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="2*"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="10*"></ColumnDefinition>
-        </Grid.ColumnDefinitions>
         <Grid Grid.Row="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*"></RowDefinition>
-                <RowDefinition Height="*"></RowDefinition>
-                <RowDefinition Height="*"></RowDefinition>
-                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="4*"></RowDefinition>
+                <RowDefinition Height="2*"></RowDefinition>
                 <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
             <Grid Grid.Row="0">
+                <Grid Grid.Column="0">
+                    <GroupBox Header="Information" Grid.Row="5" Grid.Column="0">
+                        <ScrollViewer>
+                            <TextBlock x:Name="TextBoxInfo" TextWrapping="Wrap" Text="" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </ScrollViewer>                        
+                    </GroupBox>
+                </Grid>
+            </Grid>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="2*"></RowDefinition>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="10*"></ColumnDefinition>
                     <ColumnDefinition Width="10*"></ColumnDefinition>
                     <ColumnDefinition Width="10*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0">
+                <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
+                    <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Background="Aqua">
+                        <Label HorizontalAlignment="Center" VerticalAlignment="Center">Process of sorting big file</Label>
+                    </Grid>
+                </Grid>
+                <Grid Grid.Row="1"  Grid.Column="0">
                     <GroupBox Header="First step">
-                        <Button x:Name="ButtonReadFile" Content="Divide file"  Click="ButtonReadFile_Click"/>
+                        <Button x:Name="ButtonReadFile" Content="Divide file"  Click="ButtonReadFile_Click" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </GroupBox>
                 </Grid>
-                <Grid Grid.Column="1">
+                <Grid Grid.Row="1" Grid.Column="1">
                     <GroupBox Header="Second step">
-                        <Button x:Name="ButtonSort" Content="Sort" Click="ButtonSort_Click"/>
+                        <Button x:Name="ButtonSort" Content="Sort" Click="ButtonSort_Click" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </GroupBox>
                 </Grid>
-                <Grid Grid.Column="2">
+                <Grid Grid.Row="1" Grid.Column="2">
                     <GroupBox Header="Third step">
-                        <Button x:Name="ButtonCombine" Content="Merge to file" Click="ButtonCombine_Click"/>
+                        <Button x:Name="ButtonCombine" Content="Merge to file" Click="ButtonCombine_Click" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </GroupBox>
                 </Grid>
-            </Grid>
-            <Grid Grid.Row="1">
-                <GroupBox Header="Information" Grid.Row="5" Grid.Column="0">
-                    <TextBox x:Name="TextBoxInfo" TextWrapping="Wrap" Text="" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                </GroupBox>
             </Grid>
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
@@ -54,68 +69,88 @@
                     <ColumnDefinition Width="10*"></ColumnDefinition>
                     <ColumnDefinition Width="10*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0">
+                <!--<Grid Grid.Column="0">
                     <GroupBox Header="Start size" Grid.Row="2" Grid.Column="0">
                         <TextBox x:Name="TextBoxLongSizeStart" HorizontalAlignment="Center" VerticalAlignment="Center" Text="100000"/>
                     </GroupBox>
-                </Grid>
-                <Grid Grid.Column="1">
-                    <GroupBox Header="File size" Grid.Row="0" Grid.Column="0">
+                </Grid>-->
+                <Grid Grid.Column="0" Grid.ColumnSpan="3">
+                    <GroupBox Header="Maximum size of file to sort in bytes" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center">
                         <TextBox x:Name="TextBoxSize" TextWrapping="Wrap" Text="20000" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </GroupBox>
                 </Grid>
                 <Grid Grid.Column="2"></Grid>
             </Grid>
-            <Grid Grid.Row="3">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="10*"></ColumnDefinition>
-                    <ColumnDefinition Width="10*"></ColumnDefinition>
-                    <ColumnDefinition Width="10*"></ColumnDefinition>
-                </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0">
-                    <GroupBox Header="First step">
-                        <Button x:Name="ButtonDictionary" Content="Read dictionary" Click="ButtonDictionary_Click"/>
-                    </GroupBox>
-                </Grid>
-                <Grid Grid.Column="1">
-                    <GroupBox Header="Second step">
-                        <Button x:Name="ButtonCreateBigFile" Content="Create big file" Click="ButtonCreateBigFile_Click"/>
-                    </GroupBox>
-                </Grid>
-                <Grid Grid.Column="2">
-                    <GroupBox Header="Records in file">
-                        <TextBox x:Name="TextBoxStringsNumber" TextWrapping="Wrap" Text="10000" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </GroupBox>                    
-                </Grid>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="5*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"></ColumnDefinition>
+                <ColumnDefinition Width="10*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Background="Aqua">
+                <Label HorizontalAlignment="Center" VerticalAlignment="Center">Create big file section</Label>
             </Grid>
-            <Grid Grid.Row="4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="10*"></ColumnDefinition>
-                    <ColumnDefinition Width="10*"></ColumnDefinition>
-                    <ColumnDefinition Width="10*"></ColumnDefinition>
-                    <ColumnDefinition Width="10*"></ColumnDefinition>
-                </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0">
+            <Grid Grid.Row="1" Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
                     <GroupBox Header="Words in dictionary">
                         <TextBox x:Name="TextBoxWordsInDictionary" IsReadOnly="True" TextWrapping="Wrap" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </GroupBox>
-                </Grid>                
-                <Grid Grid.Column="1">
-                    <GroupBox Header="Start word index">
-                        <TextBox x:Name="TextBoxStart" TextWrapping="Wrap" Text="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </GroupBox>
                 </Grid>
-                <Grid Grid.Column="2">
-                    <GroupBox Header="End word index">
-                        <TextBox x:Name="TextBoxEnd" TextWrapping="Wrap" Text="1000" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </GroupBox>
-                </Grid>
-                <Grid Grid.Column="3">
-                    <GroupBox Header="Words in record">
-                        <TextBox x:Name="TextBoxWordsNumber" TextWrapping="Wrap" Text="10" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Grid Grid.Row="1">
+                    <GroupBox Header="First step">
+                        <Button x:Name="ButtonDictionary" Content="Read dictionary" Click="ButtonDictionary_Click" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </GroupBox>
                 </Grid>
             </Grid>
+            <Grid Grid.Row="1" Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="10*"></ColumnDefinition>
+                        <ColumnDefinition Width="10*"></ColumnDefinition>
+                        <ColumnDefinition Width="10*"></ColumnDefinition>
+                        <ColumnDefinition Width="10*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <GroupBox Header="Start word index">
+                            <TextBox x:Name="TextBoxStart" TextWrapping="Wrap" Text="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </GroupBox>
+                    </Grid>
+                    <Grid Grid.Column="1">
+                        <GroupBox Header="End word index">
+                            <TextBox x:Name="TextBoxEnd" TextWrapping="Wrap" Text="1000" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </GroupBox>
+                    </Grid>
+                    <Grid Grid.Column="2">
+                        <GroupBox Header="Words in record">
+                            <TextBox x:Name="TextBoxWordsNumber" TextWrapping="Wrap" Text="10" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </GroupBox>
+                    </Grid>
+                    <Grid Grid.Column="3">
+                        <GroupBox Header="Records in file">
+                            <TextBox x:Name="TextBoxStringsNumber" TextWrapping="Wrap" Text="10000" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </GroupBox>
+                    </Grid>
+                </Grid>
+                <Grid Grid.Row="1">
+                    <Grid Grid.Column="1">
+                        <GroupBox Header="Second step">
+                            <Button x:Name="ButtonCreateBigFile" Content="Create big file" Click="ButtonCreateBigFile_Click" HorizontalAlignment="Center" VerticalAlignment="Center" IsEnabled="{Binding ElementName=TextBoxWordsInDictionary, Path=Text, Converter={StaticResource StringToBool}}"/>
+                        </GroupBox>
+                    </Grid>
+                </Grid>
+            </Grid>    
         </Grid>
 
 

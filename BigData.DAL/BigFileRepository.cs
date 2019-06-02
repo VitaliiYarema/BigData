@@ -3,18 +3,29 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BigData.DAL
 {
     public static class BigFileRepository
     {
+        public static string msg { get; set; }
         public static FileInfo StartFileInfo { get; set; }
+        /// <summary>
+        /// File to divide
+        /// </summary>
         public static string StartFileName { get; set; }
         public static string StartDirName { get; set; }
+        /// <summary>
+        /// List of files to divede now
+        /// </summary>
         public static List<string> filesToStartDivide = new List<string>();
         private static List<string> filesToDivide = new List<string>();
         public static long MaximumSize { get; set; }
+        /// <summary>
+        /// Maximum size of file to load into the memory
+        /// </summary>
         public static long LongSizeStart { get; set; }
         public static Dictionary<string, int> names = new Dictionary<string, int>();
         private static int indexName = 0;
@@ -28,40 +39,73 @@ namespace BigData.DAL
                 var info = new FileInfo(StartFileName);
                 var number = info.Length / LongSizeStart;
 
-                using (FileStream fileR = new FileStream(StartFileName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                using (StreamReader sr = new StreamReader(fileR))
+                //using (FileStream fileR = new FileStream(StartFileName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    while (sr.Peek() >= 0)
+                    foreach (var line in File.ReadLines(StartFileName))
                     {
-                        var tasks = new List<Task>();
-                        for (int i = 0; i < number; i++)
+                        Parallel.For(0, number, (i) =>
                         {
-                            if (sr.Peek() >= 0)
+                            var fileNameW = Path.GetFileNameWithoutExtension(info.Name);
+                            var fileWrite = Path.Combine(info.DirectoryName, fileNameW + "!" + i + ".txt");
+                            if (!filesToStartDivide.Contains(fileWrite))
                             {
-                                var fileNameW = Path.GetFileNameWithoutExtension(info.Name);
-                                var fileWrite = Path.Combine(info.DirectoryName, fileNameW + "!" + i + ".txt");
-                                if (!filesToStartDivide.Contains(fileWrite))
-                                {
-                                    filesToStartDivide.Add(fileWrite);
-                                }
-
-                                using (StreamWriter sw = new StreamWriter(fileWrite, true))
-                                {
-                                    try
-                                    {
-                                        var textLine = sr.ReadLine();
-                                        sw.WriteLine(textLine);
-                                        sw.Flush();
-                                    }
-                                    catch (Exception exc)
-                                    {
-                                        return exc.Message;
-                                    }
-                                }
+                                filesToStartDivide.Add(fileWrite);
                             }
-                        }
-                        Task.WaitAll(tasks.ToArray());
+
+                            using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
+                            {
+                                AddText(fileW, line);
+                            }
+
+                            //using (StreamWriter sw = new StreamWriter(fileWrite, true))
+                            //{
+                            //    try
+                            //    {
+                            //        var textLine = sr.ReadLine();
+                            //        sw.WriteLine(textLine);
+                            //        sw.Flush();
+                            //    }
+                            //    catch (Exception exc)
+                            //    {
+                            //    }
+                            //}
+                        });
                     }
+
+                    //using (StreamReader sr = new StreamReader(fileR))
+                    //{
+                    //    while (sr.Peek() >= 0)
+                    //    {
+                    //        //var tasks = new List<Task>();
+                    //        for (int i = 0; i < number; i++)
+                    //        {
+                    //            if (sr.Peek() >= 0)
+                    //            {
+                    //                var fileNameW = Path.GetFileNameWithoutExtension(info.Name);
+                    //                var fileWrite = Path.Combine(info.DirectoryName, fileNameW + "!" + i + ".txt");
+                    //                if (!filesToStartDivide.Contains(fileWrite))
+                    //                {
+                    //                    filesToStartDivide.Add(fileWrite);
+                    //                }
+
+                    //                using (StreamWriter sw = new StreamWriter(fileWrite, true))
+                    //                {
+                    //                    try
+                    //                    {
+                    //                        var textLine = sr.ReadLine();
+                    //                        sw.WriteLine(textLine);
+                    //                        sw.Flush();
+                    //                    }
+                    //                    catch (Exception exc)
+                    //                    {
+                    //                        return exc.Message;
+                    //                    }
+                    //                }
+                    //            }
+                    //        }
+                    //        //Task.WaitAll(tasks.ToArray());
+                    //    }
+                    //}
                 }
                 return "OK";
             }
@@ -78,62 +122,39 @@ namespace BigData.DAL
             {
                 await Task.Run(() =>
                 {
-                    PrepareFilesToDivide();
+                    filesToStartDivide = new List<string>();
+                    filesToStartDivide.Add(StartFileName);
+
+                    filesToDivide = new List<string>();
+                    filesToDivide.Add(StartFileName);
 
                     int indexChar = 1;
                     List<string> listFiles = new List<string>();
-
-                    if (filesToStartDivide.Count > 0)
-                    {
-                        listFiles = new List<string>();
-
-                        int num = filesToStartDivide.Count;
-                        for (int i = 0; i < num; i++)
-                        {
-                            messages.Add(DivideStartFile(filesToStartDivide[i], listFiles, indexChar));
-                        }
-
-                        filesToDivide.Clear();
-                        for (int i = 0; i < listFiles.Count; i++)
-                        {
-                            var sizeD = GetFileSize(listFiles[i]);
-                            if (sizeD > MaximumSize)
-                            {
-                                filesToDivide.Add(listFiles[i]);
-                            }
-                        }
-                        indexChar++;
-                    }
-
+                    
                     while (filesToDivide.Count > 0)
                     {
+                        msg = filesToDivide.Count.ToString();
                         listFiles = new List<string>();
 
                         Parallel.For(0, filesToDivide.Count, (i) =>
                         {
-                            if (filesToDivide[i] == StartFileName)
-                            {
-                                messages.Add(DivideIntoFiles(filesToDivide[i], listFiles, indexChar, false));
-                            }
-                            else
-                            {
-                                messages.Add(DivideIntoFiles(filesToDivide[i], listFiles, indexChar));
-                            }
+                            messages.Add(DivideIntoFiles(filesToDivide[i], listFiles, indexChar));
                         });
 
                         filesToDivide.Clear();
-                        for (int i = 0; i < listFiles.Count; i++)
+                        Parallel.For(0, listFiles.Count, (i) =>
                         {
                             if (names.Keys.Contains("AAAAAAAAAA") && listFiles[i].Contains("_" + names["AAAAAAAAAA"]))
                             {
-                                continue;
+                                return;
                             }
                             var sizeD = GetFileSize(listFiles[i]);
                             if (sizeD > MaximumSize)
                             {
                                 filesToDivide.Add(listFiles[i]);
                             }
-                        }
+                        });
+
                         indexChar++;
                     }
                 });
@@ -200,7 +221,7 @@ namespace BigData.DAL
                 var info = new FileInfo(fileName);
                 lock (sync)
                 {
-                    using (FileStream fileR = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.None))
+                    using (FileStream fileR = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
                     using (StreamReader sr = new StreamReader(fileR))
                     {
                         while (sr.Peek() >= 0)
@@ -220,6 +241,7 @@ namespace BigData.DAL
 
                             var fileWrite = CreateFileName(names[addName].ToString());
 
+                            // Create file if it is not exists
                             File.OpenWrite(fileWrite).Close();
                             if (!listFiles.Contains(fileWrite))
                             {
@@ -228,18 +250,21 @@ namespace BigData.DAL
 
                             //lock (sync)
                             {
-                                using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.None))
-                                using (StreamWriter sw = new StreamWriter(fileW))
+                                using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
                                 {
-                                    try
-                                    {
-                                        sw.WriteLine(textLine);
-                                        sw.Flush();
-                                    }
-                                    catch (Exception exc)
-                                    {
-                                        return exc.Message;
-                                    }
+                                    AddText(fileW, textLine);
+                                    //using (StreamWriter sw = new StreamWriter(fileW))
+                                    //{
+                                    //    try
+                                    //    {
+                                    //        sw.WriteLine(textLine);
+                                    //        sw.Flush();
+                                    //    }
+                                    //    catch (Exception exc)
+                                    //    {
+                                    //        return exc.Message;
+                                    //    }
+                                    //}
                                 }
                             }
                         }
@@ -265,100 +290,236 @@ namespace BigData.DAL
             return names.Where(r => r.Value.ToString() == addName).SingleOrDefault().Key;
         }
 
+        /// <summary>
+        /// Creates new files from one file with adding letter to new file names
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="listFiles"></param>
+        /// <param name="charNum">Number of letters from the begining of string</param>
+        /// <param name="deleteFile"></param>
+        /// <returns></returns>
         private static string DivideIntoFiles(string fileName, List<string> listFiles, int charNum, bool deleteFile = true)
         {
             try
             {
                 var info = new FileInfo(fileName);
-                lock (sync)
+
+                using (FileStream fileR = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (StreamReader sr = new StreamReader(fileR))
                 {
-                    using (FileStream fileR = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.None))
-                    using (StreamReader sr = new StreamReader(fileR))
+                    while (sr.Peek() >= 0)
                     {
-                        while (sr.Peek() >= 0)
+                        var textLine = sr.ReadLine();
+                        var str = GetStringLine(textLine);
+                        if (str.Length > charNum)
                         {
-                            var textLine = sr.ReadLine();
-                            var str = GetStringLine(textLine);
-                            if (str.Length > charNum)
+                            var addName = str.Substring(0, charNum);
+                            if (!names.Keys.Contains(addName))
                             {
-                                var addName = str.Substring(0, charNum);
-                                if (!names.Keys.Contains(addName))
-                                {
-                                    names.Add(addName, indexName++);
-                                }
-
-                                var fileWrite = CreateFileName(names[addName].ToString());
-
-                                File.OpenWrite(fileWrite).Close();
-                                if (!listFiles.Contains(fileWrite))
-                                {
-                                    listFiles.Add(fileWrite);
-                                }
-
-                                //lock (sync)
-                                {
-                                    using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.None))
-                                    using (StreamWriter sw = new StreamWriter(fileW))
-                                    {
-                                        try
-                                        {
-                                            sw.WriteLine(textLine);
-                                            sw.Flush();
-                                        }
-                                        catch (Exception exc)
-                                        {
-                                            return exc.Message;
-                                        }
-                                    }
-                                }
+                                names.Add(addName, indexName++);
                             }
-                            else
+
+                            var fileWrite = CreateFileName(names[addName].ToString());
+
+                            if (!File.Exists(fileWrite))
                             {
-                                var addName = "AAAAAAAAAA";
-                                if (!names.Keys.Contains(addName))
-                                {
-                                    names.Add(addName, indexName++);
-                                }
-
-                                var fileWrite = CreateFileName(names[addName].ToString());
-
                                 File.OpenWrite(fileWrite).Close();
-                                if (!listFiles.Contains(fileWrite))
-                                {
-                                    listFiles.Add(fileWrite);
-                                }
+                            }
+                            if (!listFiles.Contains(fileWrite))
+                            {
+                                listFiles.Add(fileWrite);
+                            }
 
-                                //lock (sync)
-                                {
-                                    using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.None))
-                                    using (StreamWriter sw = new StreamWriter(fileW))
-                                    {
-                                        try
-                                        {
-                                            sw.WriteLine(textLine);
-                                            sw.Flush();
-                                        }
-                                        catch (Exception exc)
-                                        {
-                                            return exc.Message;
-                                        }
-                                    }
-                                }
+                            using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
+                            {
+                                AddText(fileW, textLine + Environment.NewLine);
+                            }
+                        }
+                        else
+                        {
+                            var addName = "AAAAAAAAAA";
+                            if (!names.Keys.Contains(addName))
+                            {
+                                names.Add(addName, indexName++);
+                            }
+
+                            var fileWrite = CreateFileName(names[addName].ToString());
+
+                            if (!File.Exists(fileWrite))
+                            {
+                                File.OpenWrite(fileWrite).Close();
+                            }
+                            if (!listFiles.Contains(fileWrite))
+                            {
+                                listFiles.Add(fileWrite);
+                            }
+
+                            using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
+                            {
+                                AddText(fileW, textLine + Environment.NewLine);
                             }
                         }
                     }
-                    if (deleteFile)
-                    {
-                        File.Delete(fileName);
-                        names.Remove(ExtractAddName(fileName));
-                    }
                 }
+
+                //Parallel.ForEach(File.ReadLines(fileName), (textLine, _, i) =>
+                //{
+                //    var str = GetStringLine(textLine + Environment.NewLine);
+                //    if (str.Length > charNum)
+                //    {
+                //        var addName = str.Substring(0, charNum);
+                //        if (!names.Keys.Contains(addName))
+                //        {
+                //            Monitor.Enter(names);
+                //            names.Add(addName, indexName++);
+                //            Monitor.Exit(names);
+                //        }
+
+                //        var fileWrite = CreateFileName(names[addName].ToString());
+
+                //        if (!File.Exists(fileWrite))
+                //        {
+                //            File.OpenWrite(fileWrite).Close();
+                //        }
+                //        if (!listFiles.Contains(fileWrite))
+                //        {
+                //            Monitor.Enter(listFiles);
+                //            listFiles.Add(fileWrite);
+                //            Monitor.Exit(listFiles);
+                //        }
+
+                //        lock (sync)
+                //        {
+                //            using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
+                //            {
+                //                AddText(fileW, textLine);
+                //            }
+                //        }
+                //    }
+                //    else
+                //    {
+                //        var addName = "AAAAAAAAAA";
+                //        if (!names.Keys.Contains(addName))
+                //        {
+                //            Monitor.Enter(names);
+                //            names.Add(addName, indexName++);
+                //            Monitor.Exit(names);
+                //        }
+
+                //        var fileWrite = CreateFileName(names[addName].ToString());
+
+                //        if (!File.Exists(fileWrite))
+                //        {
+                //            File.OpenWrite(fileWrite).Close();
+                //        }
+                //        if (!listFiles.Contains(fileWrite))
+                //        {
+                //            Monitor.Enter(listFiles);
+                //            listFiles.Add(fileWrite);
+                //            Monitor.Exit(listFiles);
+                //        }
+
+                //        lock (sync)
+                //        {
+                //            using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
+                //            {
+                //                AddText(fileW, textLine);
+                //            }
+                //        }
+                //    }
+                //});
+
+                //lock (sync)
+                #region old code
+                //{
+                //    using (FileStream fileR = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.None))
+                //    using (StreamReader sr = new StreamReader(fileR))
+                //    {
+                //        while (sr.Peek() >= 0)
+                //        {
+                //            var textLine = sr.ReadLine();
+                //            var str = GetStringLine(textLine);
+                //            if (str.Length > charNum)
+                //            {
+                //                var addName = str.Substring(0, charNum);
+                //                if (!names.Keys.Contains(addName))
+                //                {
+                //                    names.Add(addName, indexName++);
+                //                }
+
+                //                var fileWrite = CreateFileName(names[addName].ToString());
+
+                //                File.OpenWrite(fileWrite).Close();
+                //                if (!listFiles.Contains(fileWrite))
+                //                {
+                //                    listFiles.Add(fileWrite);
+                //                }
+
+                //                //lock (sync)
+                //                {
+                //                    using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
+                //                    {
+                //                        AddText(fileW, textLine + Environment.NewLine);
+                //                    }
+                //                }
+                //            }
+                //            else
+                //            {
+                //                var addName = "AAAAAAAAAA";
+                //                if (!names.Keys.Contains(addName))
+                //                {
+                //                    names.Add(addName, indexName++);
+                //                }
+
+                //                var fileWrite = CreateFileName(names[addName].ToString());
+
+                //                File.OpenWrite(fileWrite).Close();
+                //                if (!listFiles.Contains(fileWrite))
+                //                {
+                //                    listFiles.Add(fileWrite);
+                //                }
+
+                //                //lock (sync)
+                //                {
+                //                    using (FileStream fileW = new FileStream(fileWrite, FileMode.Append, FileAccess.Write, FileShare.Write))
+                //                    {
+                //                        AddText(fileW, textLine + Environment.NewLine);
+                //                    }
+                //                }
+                //            }
+                //        }
+                //    }
+                //    if (deleteFile)
+                //    {
+                //        File.Delete(fileName);
+                //        names.Remove(ExtractAddName(fileName));
+                //    }
+                //}
+                #endregion
+
+                if (deleteFile)
+                {
+                    File.Delete(fileName);
+                    names.Remove(ExtractAddName(fileName));
+                }
+
                 return "OK";
             }
             catch (Exception exc)
             {
                 return exc.Message;
             }
+        }
+
+        /// <summary>
+        /// Add text to file
+        /// </summary>
+        /// <param name="fs"></param>
+        /// <param name="value"></param>
+        private static void AddText(FileStream fs, string value)
+        {
+            byte[] info = new UTF8Encoding(true).GetBytes(value);
+            fs.Write(info, 0, info.Length);
         }
 
         public static bool SortAllFiles()
@@ -383,7 +544,7 @@ namespace BigData.DAL
             foreach (string fileName in fileEntries)
             {
                 var info = new FileInfo(fileName);
-                var fileNameW = Path.GetFileNameWithoutExtension(StartFileInfo.Name);
+                var fileNameW = Path.GetFileNameWithoutExtension(StartFileName);
                 if (info.Name.Contains(fileNameW + "_"))
                 {
                     filesToCombine.Add(fileName);
@@ -395,20 +556,34 @@ namespace BigData.DAL
         public static void SortFile(string fileName)
         {
             var records = new List<Record>();
-            using (StreamReader sr = new StreamReader(fileName))
-            {
-                while (sr.Peek() >= 0)
+
+            Parallel.ForEach(File.ReadLines(fileName), (textLine, _, i) => {
+                var str = GetStringLine(textLine);
+                if (!string.IsNullOrEmpty(str))
                 {
-                    var textLine = sr.ReadLine();
-                    var str = GetStringLine(textLine);
-                    if (string.IsNullOrEmpty(str))
-                    {
-                        continue;
-                    }
                     var record = GetRecord(textLine);
-                    records.Add(record);
+                    if (record != null)
+                    {
+                        records.Add(record);
+                    }
                 }
-            }
+            });
+
+            //using (StreamReader sr = new StreamReader(fileName))
+            //{
+            //    while (sr.Peek() >= 0)
+            //    {
+            //        var textLine = sr.ReadLine();
+            //        var str = GetStringLine(textLine);
+            //        if (string.IsNullOrEmpty(str))
+            //        {
+            //            continue;
+            //        }
+            //        var record = GetRecord(textLine);
+            //        records.Add(record);
+            //    }
+            //}
+
             var sortedRecords = SortRecords(records);
             File.Delete(fileName);
             using (StreamWriter sw = new StreamWriter(fileName))
