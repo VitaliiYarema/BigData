@@ -26,7 +26,9 @@
             <Grid Grid.Row="0">
                 <Grid Grid.Column="0">
                     <GroupBox Header="Information" Grid.Row="5" Grid.Column="0">
-                        <TextBlock x:Name="TextBoxInfo" TextWrapping="Wrap" Text="" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <ScrollViewer>
+                            <TextBlock x:Name="TextBoxInfo" TextWrapping="Wrap" Text="" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </ScrollViewer>                        
                     </GroupBox>
                 </Grid>
             </Grid>
@@ -72,8 +74,8 @@
                         <TextBox x:Name="TextBoxLongSizeStart" HorizontalAlignment="Center" VerticalAlignment="Center" Text="100000"/>
                     </GroupBox>
                 </Grid>-->
-                <Grid Grid.Column="1">
-                    <GroupBox Header="Maximum size of file to sort" Grid.Row="0" Grid.Column="0">
+                <Grid Grid.Column="0" Grid.ColumnSpan="3">
+                    <GroupBox Header="Maximum size of file to sort in bytes" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center">
                         <TextBox x:Name="TextBoxSize" TextWrapping="Wrap" Text="20000" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </GroupBox>
                 </Grid>
